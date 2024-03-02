@@ -1,19 +1,32 @@
 #!/usr/bin/python3
 """
-Query the Reddit API to get the number of subscribers for a given subreddit
+Returns the number of subscribers from a subreddit
 """
-
 import requests
 
 
 def number_of_subscribers(subreddit):
-    """
-    Returns the number of subscribers for a given subreddit
-    """
-    url = 'https://www.reddit.com/r/{}/about.json'.format(subreddit)
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-    response = requests.get(url, headers=headers, allow_redirects=False)
-    if response.status_code != 200:
+    """ Set a custom header user-agent """
+    headers = {"User-Agent": "ALU-scripting API 0.1"}
+    url = "https://www.reddit.com/r/{}.json".format(subreddit)
+
+    try:
+        response = requests.get(url, headers=headers,
+                                timeout=30, allow_redirects=False)
+
+    except requests.exceptions.Timeout:
+        return "The request Timed out"
+
+    if response.status_code == 200:
+        json_data = response.json()
+        subscriber_number = (
+            json_data.get("data")
+            .get("children")[0]
+            .get("data")
+            .get("subreddit_subscribers")
+        )
+        return subscriber_number
+    elif response.status_code == 404:
         return 0
-    data = response.json().get('data')
-    return data.get('subscribers')
+    else:
+        return 0
