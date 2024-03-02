@@ -1,27 +1,30 @@
 #!/usr/bin/python3
-"""
-2. Recurse it!
-"""
+'''Defines recursive function to return hot posts in subreddit
+'''
 import requests
 
 
-def recurse(subreddit, hot_list=[], after=None):
-    """ function that queries the Reddit API and returns a list containing
-        the titles of all hot articles for a given subreddit. If no results
-        are found for the given subreddit, the function should return None.
-    """
-    headers = {'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0)\
-                AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100\
-                Safari/537.36'}
-    params = {'limit': 100, 'after': after}
-    url = 'https://www.reddit.com/r/{}/hot.json'.format(subreddit)
-    res = requests.get(url, headers=headers, params=params)
-    if res.status_code == 404:
+def recurse(subreddit, hot_list=[], fullname=None, count=0):
+    '''fetches all hot posts in a subreddit
+
+    Return:
+        None - if subreddit is invalid
+    '''
+    url = 'https://www.reddit.com/r/{}/hot/.json'.format(subreddit)
+    params = {'after': fullname, 'limit': 100, 'count': count}
+    headers = {'user-agent': 'Mozilla/5.0 \
+(Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0'}
+    info = requests.get(url, headers=headers,
+                        params=params, allow_redirects=False)
+    if (info.status_code % 400) < 100:
         return None
-    children = res.json().get('data').get('children')
-    for child in children:
-        hot_list.append(child.get('data').get('title'))
-    after = res.json().get('data').get('after')
-    if after is None:
-        return hot_list
-    return recurse(subreddit, hot_list, after
+    info_json = info.json()
+    results = info_json.get('data').get('children')
+    new_packet = [post.get('data').get('title') for post in results]
+    hot_list += new_packet
+    after = info_json.get('data').get('after', None)
+    dist = info_json.get('data').get('dist')
+    count += dist
+    if after:
+        recurse(subreddit, hot_list, after, count)
+    return hot_list
