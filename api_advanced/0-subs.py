@@ -1,16 +1,19 @@
 #!/usr/bin/python3
-"""Gets number of subscribers"""
-from requests import get
-
+import requests
 
 def number_of_subscribers(subreddit):
-    """Returns number of subscribers of a given subreddit"""
-    base_url = 'https://www.reddit.com'
-    full_url = base_url + '/r/{}/about.json'.format(subreddit)
-
-    res = get(full_url, headers={'User-Agent': 'Mozilla/5.0'})
-
-    if res.status_code != 200:
-        return 0
+    url = f"https://www.reddit.com/r/{subreddit}/about.json"
+    headers = {"User-Agent": "reddit-subscriber-checker"}
+    
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        subscribers = data['data']['subscribers']
+        return subscribers
     else:
-        return res.json().get('data').get('subscribers')
+        return 0
+
+if __name__ == '__main__':
+    # Example usage:
+    subreddit = "programming"
+    print(number_of_subscribers(subreddit))
